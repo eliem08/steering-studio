@@ -8,6 +8,7 @@ import argparse, json
 from pathlib import Path
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from provenance import build_manifest
 
 def device_name(requested):
     if requested!="auto": return requested
@@ -48,7 +49,7 @@ def run(model_id="gpt2", positive="I feel confident, clear, and decisive.", cont
         finally:h.remove()
     baseline=generate(0.0);steered=generate(scale)
     out=Path(output);out.mkdir(parents=True,exist_ok=True)
-    report={"model_id":model_id,"device":device,"layer":layer,"scale":scale,"direction_norm_before_normalization":float(norm.cpu()),"positive_prompt":positive,"contrast_prompt":contrast,"generation_prompt":prompt,"baseline":baseline,"steered":steered,"warning":"Exploratory intervention only; semantic direction and effects are not validated. Steering can degrade unrelated capabilities."}
+    report={"model_id":model_id,"device":device,"layer":layer,"scale":scale,"direction_norm_before_normalization":float(norm.cpu()),"positive_prompt":positive,"contrast_prompt":contrast,"generation_prompt":prompt,"baseline":baseline,"steered":steered,"manifest":build_manifest("steering-studio",model_id=model_id,device=device,config={"layer":layer,"scale":scale,"max_new_tokens":max_new_tokens},inputs={"positive":positive,"contrast":contrast,"prompt":prompt}),"warning":"Exploratory intervention only; semantic direction and effects are not validated. Steering can degrade unrelated capabilities."}
     (out/"steering.json").write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding="utf-8")
     return report
 def main():
