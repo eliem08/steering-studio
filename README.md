@@ -2,44 +2,26 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/eliem08/steering-studio/blob/main/colab.ipynb)
 
+An experimental activation-intervention sandbox for GPT-2-style transformer blocks.
 
-Compare baseline generation against controlled residual-dimension interventions for GPT-2-style models.
+## Run a controlled steering comparison
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue) ![PyTorch](https://img.shields.io/badge/PyTorch-GPU%20or%20CPU-ee4c2c)
+    pip install -r requirements.txt
+    python activation_steering.py --model-id gpt2 --layer 6 --scale 0.5 --prompt "I feel"
+
+The script computes a difference between mean activations for a positive and contrast prompt, normalizes that direction, then compares greedy baseline generation with an intervention at one block. Results are saved to outputs/steering/steering.json.
+
+    python activation_steering.py --model-id gpt2 --layer 4 --scale 0.1 --device cuda
+
+This initial implementation supports GPT-2-style models exposing model.transformer.h. Other architectures need architecture-specific hook handling. In Colab, select GPU runtime if available.
+
+## Important limitations
+
+This is exploratory code, not a validated control method. A direction derived from two prompts is not guaranteed to represent a single concept; steering can change unrelated capabilities and produce misleading results. Record baselines, random directions, multiple prompts, and task-level regressions before making claims.
 
 ## Quickstart
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-python main.py
-```
-
-Default run uses a tiny randomly initialized model to validate the software path and does not claim useful model behavior.
-
-## Use a pretrained model
-
-Set `NEURONLAB_MODEL` or pass `--real-model --model-id MODEL_ID`. For example, select a small causal language model you are licensed to use:
-
-```bash
-python main.py --real-model --model-id distilgpt2 --text "The sky is"
-```
-
-Model weights take disk, RAM, and often VRAM. The runtime detects CUDA, Apple MPS, or CPU automatically. Install the appropriate PyTorch build for your hardware if needed.
-
-## Google Colab
-
-Open `colab.ipynb` in Colab, select **Runtime → Change runtime type → T4 GPU** when available, then run all cells. The same notebook also runs on CPU, but inference is slower. Free GPU availability and quotas vary.
-
-## Reproducibility and limitations
-
-- Save output artifacts under `outputs/`. Repeat experiments on held-out inputs before making claims.
-- Random demo weights only exercise code paths. They are not suitable for quality, safety, or interpretability conclusions.
-- Do not treat lexical heuristics or activation patterns as reliable evidence of intent or deception.
-- Activation steering may harm other capabilities; record baselines and random controls.
-- Do not expose model inference to the public internet without authentication and resource controls.
+    python main.py
 
 ## License
 
