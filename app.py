@@ -1,6 +1,7 @@
 import json
 import torch
 from runtime import load_bundle, OUT
+from provenance import build_manifest
 
 def _generate(bundle,prompt,layer=None,dimension=0,scale=0.0,max_new_tokens=40):
  model=bundle.model; batch=bundle.tokenizer(prompt,return_tensors="pt"); batch={k:v.to(bundle.device) for k,v in batch.items() if isinstance(v,torch.Tensor)}
@@ -22,7 +23,7 @@ def _generate(bundle,prompt,layer=None,dimension=0,scale=0.0,max_new_tokens=40):
 def run(text=None,real_model=False,model_id=None):
  b=load_bundle(real_model=real_model,model_id=model_id); prompt=text or "The sky is"
  blocks=getattr(getattr(b.model,"transformer",None),"h",None)
- report={"model":b.model_id,"device":b.device,"prompt":prompt,"baseline":_generate(b,prompt),"interventions":[],"caveat":"Residual-dimension edits are uncalibrated controls, not neuron-specific steering. Measure behavior on held-out tasks and check regressions."}
+ report={"model":b.model_id,"device":b.device,"prompt":prompt,"baseline":_generate(b,prompt),"interventions":[],"caveat":"Residual-dimension edits are uncalibrated controls, not neuron-specific steering. Measure behavior on held-out tasks and check regressions.","manifest":build_manifest("steering-studio",model_id=b.model_id,device=b.device,config={"max_new_tokens":40,"intervention_scales":[-0.5,0.5,1.0]},inputs={"prompt":prompt})}
  if blocks is not None:
   layer=len(blocks)//2
   for scale in [-0.5,0.5,1.0]: report["interventions"].append({"layer":layer,"dimension":0,"scale":scale,"output":_generate(b,prompt,layer,0,scale)})
